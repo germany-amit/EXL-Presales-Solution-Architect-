@@ -31,12 +31,21 @@ tabs = st.tabs(["📑 Pre-Sales Proposal Generator", "🛠 CX Journey Mapper", "
 with tabs[0]:
     st.header("📑 Pre-Sales Proposal Generator")
 
-    st.markdown("Upload a sample RFP / Requirement text, and generate a structured proposal draft.")
+    mode = st.radio("Choose Input Mode:", ["Upload RFP", "Use Demo RFP"])
 
-    uploaded_file = st.file_uploader("Upload RFP (TXT)", type=["txt"])
-    if uploaded_file is not None:
-        rfp_text = uploaded_file.read().decode("utf-8")
+    if mode == "Upload RFP":
+        uploaded_file = st.file_uploader("Upload RFP (TXT)", type=["txt"])
+        if uploaded_file is not None:
+            rfp_text = uploaded_file.read().decode("utf-8")
+        else:
+            rfp_text = None
+    else:
+        # Demo RFP text
+        rfp_text = """We are looking for a CX transformation solution with
+        omnichannel CCaaS, Conversational AI, Agent Assist, and Analytics.
+        The solution should improve customer engagement and reduce handling time."""
 
+    if rfp_text:
         st.subheader("📄 RFP Content")
         st.write(rfp_text)
 
@@ -95,37 +104,42 @@ with tabs[1]:
 with tabs[2]:
     st.header("📊 Contact Center Analytics")
 
-    st.markdown("Upload a CSV with customer transcripts (`text` column required). Example provided below.")
+    mode = st.radio("Choose Input Mode:", ["Upload Transcript CSV", "Use Demo Transcript Data"])
 
-    sample_csv = pd.DataFrame({
-        "text": [
-            "I am very unhappy with your service.",
-            "The agent was helpful and solved my problem quickly.",
-            "Waiting time was too long, very frustrating.",
-            "Great support, I am satisfied with the resolution."
-        ]
-    })
+    if mode == "Upload Transcript CSV":
+        uploaded_csv = st.file_uploader("Upload Transcript CSV", type=["csv"])
+        if uploaded_csv is not None:
+            df = pd.read_csv(uploaded_csv)
+        else:
+            df = None
+    else:
+        # Demo transcript data (inline)
+        demo_data = {
+            "text": [
+                "I am very unhappy with your service.",
+                "The agent was helpful and solved my problem quickly.",
+                "Waiting time was too long, very frustrating.",
+                "Great support, I am satisfied with the resolution.",
+                "Your chatbot was confusing and didn’t answer my question.",
+                "Excellent experience, I will recommend your company.",
+                "I had to repeat my issue multiple times, very poor CX.",
+                "The agent handled the issue politely and professionally.",
+                "The app is slow, and I faced login problems.",
+                "Quick resolution and good support from your team."
+            ]
+        }
+        df = pd.DataFrame(demo_data)
 
-    st.download_button(
-        "⬇️ Download Sample Transcript CSV",
-        sample_csv.to_csv(index=False).encode(),
-        "sample_transcripts.csv"
-    )
-
-    uploaded_csv = st.file_uploader("Upload Transcript CSV", type=["csv"])
-    if uploaded_csv is not None:
-        df = pd.read_csv(uploaded_csv)
-
-        st.subheader("📂 Uploaded Data")
-        st.write(df.head())
+    if df is not None:
+        st.subheader("📂 Transcript Data (first 10 rows)")
+        st.write(df.head(10))
 
         st.subheader("📊 Sentiment Analysis")
         sentiments = df["text"].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
         df["sentiment"] = sentiments
+        st.write(df.head(10))
 
-        st.write(df)
-
-        # Plot sentiment
+        # Plot sentiment distribution
         plt.figure(figsize=(6,4))
         plt.hist(sentiments, bins=5, color="skyblue", edgecolor="black")
         plt.xlabel("Sentiment Score (-1 negative to +1 positive)")
